@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import firebase from "../../firebase";
+import md5 from "md5";
 
 function RegisterPage() {
   const {
@@ -24,6 +25,11 @@ function RegisterPage() {
       let createUser = await firebase
         .auth()
         .createUserWithEmailAndPassword(data.email, data.password);
+
+      await createUser.user.updateProfile({
+        displayName: data.name,
+        photoURL: `http://gravatar.com/avatar/${md5(data.email)}?d=identicon`,
+      });
       console.log("[Create User] ", createUser);
 
       setLoading(false);
