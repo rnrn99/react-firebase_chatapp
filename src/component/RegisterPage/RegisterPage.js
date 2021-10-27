@@ -1,6 +1,7 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
+import firebase from "../../firebase";
 
 function RegisterPage() {
   const {
@@ -10,16 +11,34 @@ function RegisterPage() {
     handleSubmit,
   } = useForm();
 
+  const [SubmitError, setSubmitError] = useState("");
+  const [Loading, setLoading] = useState(false);
+
   const password = useRef();
   password.current = watch("password");
 
-  console.log(watch("email"));
+  const onSubmit = async (data) => {
+    try {
+      setLoading(true);
+
+      let createUser = await firebase
+        .auth()
+        .createUserWithEmailAndPassword(data.email, data.password);
+      console.log("[Create User] ", createUser);
+
+      setLoading(false);
+    } catch (error) {
+      setSubmitError(error.message);
+      setLoading(false);
+      setTimeout(() => setSubmitError(""), 5000);
+    }
+  };
 
   return (
     <div className="auth-wrapper">
       <h3>Register</h3>
 
-      <form>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <label>Email</label>
         <input
           name="email"
@@ -69,7 +88,8 @@ function RegisterPage() {
             <p>비밀번호가 일치하지 않습니다</p>
           )}
 
-        <input type="submit" />
+        {SubmitError && <p>{SubmitError}</p>}
+        <input type="submit" disabled={Loading} />
 
         <Link style={{ color: "gray", textDecoration: "none" }} to="/login">
           이미 아이디가 있다면...
