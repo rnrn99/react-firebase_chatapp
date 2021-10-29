@@ -32,6 +32,11 @@ function RegisterPage() {
       });
       console.log("[Create User] ", createUser);
 
+      await firebase.database().ref("user").child(createUser.user.uid).set({
+        name: createUser.user.displayName,
+        image: createUser.user.photoURL,
+      });
+
       setLoading(false);
     } catch (error) {
       setSubmitError(error.message);
