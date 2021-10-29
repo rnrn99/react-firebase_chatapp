@@ -15,7 +15,7 @@ function App() {
         history.push("/login");
       }
     });
-  }, []);
+  }, [history]);
 
   return (
     <Switch>
