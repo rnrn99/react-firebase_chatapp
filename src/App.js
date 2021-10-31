@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { Switch, Route, useHistory } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import firebase from "./firebase";
-import { setUser } from "./redux/action/userAction";
+import { setUser, clearUser } from "./redux/action/userAction";
 
 import LoginPage from "./component/LoginPage/LoginPage";
 import RegisterPage from "./component/RegisterPage/RegisterPage";
@@ -20,6 +20,7 @@ function App() {
         dispatch(setUser(user));
       } else {
         history.push("/login");
+        dispatch(clearUser(user));
       }
     });
   }, []);

@@ -2,9 +2,14 @@ import React from "react";
 import { IoMdChatboxes } from "react-icons/io";
 import { Dropdown, Image } from "react-bootstrap";
 import { useSelector } from "react-redux";
+import firebase from "../../../firebase";
 
 function UserPanel() {
   const user = useSelector((state) => state.user.currentUser);
+
+  const handleLogout = () => {
+    firebase.auth().signOut();
+  };
 
   return (
     <div>
@@ -28,7 +33,7 @@ function UserPanel() {
 
           <Dropdown.Menu>
             <Dropdown.Item onClick>프로필 사진 변경</Dropdown.Item>
-            <Dropdown.Item onClick>로그아웃</Dropdown.Item>
+            <Dropdown.Item onClick={handleLogout}>로그아웃</Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>
       </div>
