@@ -22,7 +22,7 @@ function App() {
         history.push("/login");
       }
     });
-  }, [history]);
+  }, []);
 
   if (isLoading) {
     return (
