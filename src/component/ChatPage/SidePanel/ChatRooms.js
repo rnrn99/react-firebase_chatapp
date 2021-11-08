@@ -3,14 +3,56 @@ import { AiOutlineSmile, AiOutlinePlus } from "react-icons/ai";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
+import { connect } from "react-redux";
+import firebase from "../../../firebase";
 
 export class ChatRooms extends Component {
   state = {
     show: false,
+    name: "",
+    description: "",
+    chatRoomRef: firebase.database().ref("chatroom"),
   };
 
   handleClose = () => this.setState({ show: false });
   handleShow = () => this.setState({ show: true });
+  handleSubmit = (e) => {
+    e.preventDefault();
+
+    const { name, description } = this.state;
+
+    if (this.isFormValid(name, description)) {
+      this.addChatRoom();
+    }
+  };
+
+  isFormValid = (name, description) => name && description;
+
+  addChatRoom = async () => {
+    const key = this.state.chatRoomRef.push().key;
+    const { name, description } = this.state;
+    const { user } = this.props;
+    const newRoom = {
+      id: key,
+      name: name,
+      description: description,
+      createdBy: {
+        name: user.displayName,
+        image: user.photoURL,
+      },
+    };
+
+    try {
+      await this.state.chatRoomRef.child(key).update(newRoom);
+      this.setState({
+        name: "",
+        description: "",
+        show: false,
+      });
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
 
   render() {
     return (
@@ -38,12 +80,13 @@ export class ChatRooms extends Component {
           </Modal.Header>
 
           <Modal.Body>
-            <Form>
+            <Form onSubmit={this.handleSubmit}>
               <Form.Group>
                 <Form.Label>Name</Form.Label>
                 <Form.Control
                   type="text"
                   placeholder="Enter the name of the chat room"
+                  onChange={(e) => this.setState({ name: e.target.value })}
                 />
               </Form.Group>
               <Form.Group>
@@ -51,6 +94,9 @@ export class ChatRooms extends Component {
                 <Form.Control
                   type="text"
                   placeholder="Enter the description of the chat room"
+                  onChange={(e) =>
+                    this.setState({ description: e.target.value })
+                  }
                 />
               </Form.Group>
             </Form>
@@ -60,8 +106,8 @@ export class ChatRooms extends Component {
             <Button variant="secondary" onClick={this.handleClose}>
               Close
             </Button>
-            <Button variant="primary" onClick={this.handleClose}>
-              Save Changes
+            <Button variant="primary" onClick={this.handleSubmit}>
+              Create
             </Button>
           </Modal.Footer>
         </Modal>
@@ -70,4 +116,10 @@ export class ChatRooms extends Component {
   }
 }
 
-export default ChatRooms;
+const mapStateToProps = (state) => {
+  return {
+    user: state.user.currentUser,
+  };
+};
+
+export default connect(mapStateToProps)(ChatRooms);
