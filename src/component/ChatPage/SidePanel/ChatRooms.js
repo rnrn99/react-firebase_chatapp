@@ -12,6 +12,19 @@ export class ChatRooms extends Component {
     name: "",
     description: "",
     chatRoomRef: firebase.database().ref("chatroom"),
+    chatRoom: [],
+  };
+
+  componentDidMount() {
+    this.AddChatRoomListener();
+  }
+
+  AddChatRoomListener = () => {
+    let arrChatRoom = [];
+    this.state.chatRoomRef.on("child_added", (DataSnapshot) => {
+      arrChatRoom.push(DataSnapshot.val());
+      this.setState({ chatRoom: arrChatRoom });
+    });
   };
 
   handleClose = () => this.setState({ show: false });
@@ -54,6 +67,10 @@ export class ChatRooms extends Component {
     }
   };
 
+  renderChatRoom = (chatRoom) =>
+    chatRoom.length > 0 &&
+    chatRoom.map((room) => <li key={room.id}># {room.name}</li>);
+
   render() {
     return (
       <div>
@@ -66,12 +83,16 @@ export class ChatRooms extends Component {
           }}
         >
           <AiOutlineSmile style={{ marginRight: 3 }} />
-          CHAT ROOMS ({})
+          CHAT ROOMS ({this.state.chatRoom.length})
           <AiOutlinePlus
             onClick={this.handleShow}
             style={{ position: "absolute", right: 0, cursor: "pointer" }}
           />
         </div>
+
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {this.renderChatRoom(this.state.chatRoom)}
+        </ul>
 
         {/* MODAL */}
         <Modal show={this.state.show} onHide={this.handleClose}>
