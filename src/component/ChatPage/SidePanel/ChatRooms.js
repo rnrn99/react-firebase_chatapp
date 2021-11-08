@@ -22,6 +22,10 @@ export class ChatRooms extends Component {
     this.AddChatRoomListener();
   }
 
+  componentWillUnmount() {
+    this.state.chatRoomRef.off();
+  }
+
   AddChatRoomListener = () => {
     let arrChatRoom = [];
     this.state.chatRoomRef.on("child_added", (DataSnapshot) => {
