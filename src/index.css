@@ -59,7 +59,8 @@ body {
 }
 
 .auth-wrapper button[type="submit"],
-.auth-wrapper input[type="submit"] {
+.auth-wrapper input[type="submit"],
+.message-form-button {
   background: #7a84eb;
   color: white;
   text-transform: uppercase;
@@ -72,7 +73,8 @@ body {
 }
 
 .auth-wrapper button[type="submit"]:hover,
-.auth-wrapper input[type="submit"]:hover {
+.auth-wrapper input[type="submit"]:hover,
+.message-form-button:hover {
   background: #636ee6;
 }
 
