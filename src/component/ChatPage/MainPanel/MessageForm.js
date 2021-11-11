@@ -10,6 +10,8 @@ function MessageForm() {
 
   const [Content, setContent] = useState("");
   const [Loading, setLoading] = useState(false);
+  const [Percentage, setPercentage] = useState(0);
+
   const messageRef = firebase.database().ref("message");
   const storageRef = firebase.storage().ref();
   const inputOpenImageRef = useRef();
@@ -22,16 +24,19 @@ function MessageForm() {
     inputOpenImageRef.current.click();
   };
 
-  const handleUploadImage = async (e) => {
+  const handleUploadImage = (e) => {
     const file = e.target.files[0];
     const filePath = `/message/public/${file.name}`;
     const metadata = { contentType: mime.lookup(file.name) };
 
-    try {
-      await storageRef.child(filePath).put(file, metadata);
-    } catch (error) {
-      alert(error.message);
-    }
+    let uploadTask = storageRef.child(filePath).put(file, metadata);
+
+    uploadTask.on("state_changed", (UploadSnapshot) => {
+      const percent = Math.round(
+        (UploadSnapshot.bytesTransferred / UploadSnapshot.totalBytes) * 100,
+      );
+      setPercentage(percent);
+    });
   };
 
   const createMessage = (fileUrl = null) => {
@@ -84,7 +89,9 @@ function MessageForm() {
         </Form.Group>
       </Form>
 
-      <ProgressBar animated label="" now={60} />
+      {!(Percentage === 0 || Percentage === 100) && (
+        <ProgressBar animated now={Percentage} />
+      )}
 
       <Row>
         <Col>
