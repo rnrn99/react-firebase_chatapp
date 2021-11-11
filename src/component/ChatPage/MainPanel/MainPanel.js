@@ -2,9 +2,42 @@ import React, { Component } from "react";
 import MessageHeader from "./MessageHeader";
 import Message from "./Message";
 import MessageForm from "./MessageForm";
+import { connect } from "react-redux";
+import firebase from "../../../firebase";
 
 export class MainPanel extends Component {
+  state = {
+    message: [],
+    messageRef: firebase.database().ref("message"),
+    messageLoading: true,
+  };
+
+  componentDidMount() {
+    const { chatRoom } = this.props;
+
+    if (chatRoom) {
+      this.addMessageListener(chatRoom.id);
+    }
+  }
+
+  addMessageListener = (chatRoomID) => {
+    let arrMessage = [];
+    this.state.messageRef
+      .child(chatRoomID)
+      .on("child_added", (DataSnapshot) => {
+        arrMessage.push(DataSnapshot.val());
+        this.setState({ message: arrMessage, messageLoading: false });
+      });
+  };
+
+  renderMessage = (message) =>
+    message.length > 0 &&
+    message.map((m) => (
+      <Message key={m.timestamp} message={m} user={this.props.user} />
+    ));
+
   render() {
+    const { message } = this.state;
     return (
       <div style={{ padding: "2rem 2rem 0 2rem" }}>
         <MessageHeader />
@@ -18,11 +51,19 @@ export class MainPanel extends Component {
             marginBottom: "1rem",
             overflowY: "auto",
           }}
-        ></div>
+        >
+          {this.renderMessage(message)}
+        </div>
         <MessageForm />
       </div>
     );
   }
 }
+const mapStateToProps = (state) => {
+  return {
+    user: state.user.currentUser,
+    chatRoom: state.chatRoom.currentChatRoom,
+  };
+};
 
-export default MainPanel;
+export default connect(mapStateToProps)(MainPanel);
