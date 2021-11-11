@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Form, ProgressBar, Row, Col } from "react-bootstrap";
 import { useSelector } from "react-redux";
+import mime from "mime-types";
 import firebase from "../../../firebase";
 
 function MessageForm() {
@@ -10,9 +11,27 @@ function MessageForm() {
   const [Content, setContent] = useState("");
   const [Loading, setLoading] = useState(false);
   const messageRef = firebase.database().ref("message");
+  const storageRef = firebase.storage().ref();
+  const inputOpenImageRef = useRef();
 
   const handleChange = (e) => {
     setContent(e.target.value);
+  };
+
+  const handleOpenImageRef = () => {
+    inputOpenImageRef.current.click();
+  };
+
+  const handleUploadImage = async (e) => {
+    const file = e.target.files[0];
+    const filePath = `/message/public/${file.name}`;
+    const metadata = { contentType: mime.lookup(file.name) };
+
+    try {
+      await storageRef.child(filePath).put(file, metadata);
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const createMessage = (fileUrl = null) => {
@@ -69,7 +88,11 @@ function MessageForm() {
 
       <Row>
         <Col>
-          <button className="message-form-button" style={{ width: "100%" }}>
+          <button
+            className="message-form-button"
+            style={{ width: "100%" }}
+            onClick={handleOpenImageRef}
+          >
             UPLOAD
           </button>
         </Col>
@@ -83,6 +106,13 @@ function MessageForm() {
           </button>
         </Col>
       </Row>
+
+      <input
+        style={{ display: "none" }}
+        type="file"
+        ref={inputOpenImageRef}
+        onChange={handleUploadImage}
+      />
     </div>
   );
 }
