@@ -46,7 +46,10 @@ function Message({ message, user }) {
           </h6>
           {isImage(message) ? (
             <img
-              style={{ maxWidth: "250px" }}
+              style={{
+                maxWidth: "300px",
+                margin: "10px 20px",
+              }}
               alt="_image"
               src={message.image}
             />

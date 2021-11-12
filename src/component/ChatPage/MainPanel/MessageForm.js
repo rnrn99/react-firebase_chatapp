@@ -28,15 +28,30 @@ function MessageForm() {
     const file = e.target.files[0];
     const filePath = `/message/public/${file.name}`;
     const metadata = { contentType: mime.lookup(file.name) };
+    setLoading(true);
 
     let uploadTask = storageRef.child(filePath).put(file, metadata);
 
-    uploadTask.on("state_changed", (UploadSnapshot) => {
-      const percent = Math.round(
-        (UploadSnapshot.bytesTransferred / UploadSnapshot.totalBytes) * 100,
-      );
-      setPercentage(percent);
-    });
+    uploadTask.on(
+      "state_changed",
+      (UploadSnapshot) => {
+        const percent = Math.round(
+          (UploadSnapshot.bytesTransferred / UploadSnapshot.totalBytes) * 100,
+        );
+        setPercentage(percent);
+      },
+      (err) => {
+        alert(err.message);
+        setLoading(false);
+      },
+      () => {
+        // storage에 file 저장 후 database에 message 저장
+        uploadTask.snapshot.ref.getDownloadURL().then((fileUrl) => {
+          messageRef.child(chatRoom.id).push().set(createMessage(fileUrl));
+          setLoading(false);
+        });
+      },
+    );
   };
 
   const createMessage = (fileUrl = null) => {
@@ -59,6 +74,7 @@ function MessageForm() {
 
     return message;
   };
+
   const handleSubmit = async () => {
     if (!Content) {
       alert("Type contents first");
@@ -99,6 +115,7 @@ function MessageForm() {
             className="message-form-button"
             style={{ width: "100%" }}
             onClick={handleOpenImageRef}
+            disabled={Loading ? true : false}
           >
             UPLOAD
           </button>
@@ -108,6 +125,7 @@ function MessageForm() {
             className="message-form-button"
             style={{ width: "100%" }}
             onClick={handleSubmit}
+            disabled={Loading ? true : false}
           >
             SEND
           </button>
@@ -115,6 +133,7 @@ function MessageForm() {
       </Row>
 
       <input
+        accept="image/jpeg, image/png"
         style={{ display: "none" }}
         type="file"
         ref={inputOpenImageRef}
