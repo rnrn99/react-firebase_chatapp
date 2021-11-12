@@ -20,7 +20,7 @@ function Message({ message, user }) {
       <Media
         style={{
           marginBottom: "3px",
-          width: "50%",
+          width: isImage(message) ? "70%" : "50%",
           marginLeft: isMine(message, user) && "auto",
         }}
       >

@@ -11,17 +11,20 @@ import {
   Button,
 } from "react-bootstrap";
 import { FaLock, FaRegHeart, FaSearch } from "react-icons/fa";
+import { useSelector } from "react-redux";
 
-function MessageHeader() {
+function MessageHeader({ handleSearchChange }) {
+  const chatRoom = useSelector((state) => state.chatRoom.currentChatRoom);
   return (
     <div
       style={{
         width: "100%",
-        height: "170px",
+        height: "auto",
         border: ".2rem solid #ececec",
         borderRadius: "1rem",
         marginBottom: "1rem",
         padding: "1rem",
+        overflow: "hidden",
       }}
     >
       <Container>
@@ -29,7 +32,7 @@ function MessageHeader() {
           <Col>
             <h2>
               <FaLock /> <FaRegHeart />
-              ChatRoom Name
+              {chatRoom && chatRoom.name}
             </h2>
           </Col>
           <Col>
@@ -37,13 +40,18 @@ function MessageHeader() {
               <InputGroup.Text>
                 <FaSearch />
               </InputGroup.Text>
-              <FormControl placeholder="Search Messages" aria-label="search" />
+              <FormControl
+                placeholder="Search Messages"
+                aria-label="search"
+                onChange={handleSearchChange}
+              />
             </InputGroup>
           </Col>
         </Row>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <p>
-            <Image src="" /> user name
+            <Image src={chatRoom.createdBy.image} width={30} />
+            {chatRoom && chatRoom.createdBy.name}
           </p>
         </div>
         <Row>
@@ -56,7 +64,7 @@ function MessageHeader() {
                   </Accordion.Toggle>
                 </Card.Header>
                 <Accordion.Collapse eventKey="0">
-                  <Card.Body>body</Card.Body>
+                  <Card.Body>{chatRoom && chatRoom.description}</Card.Body>
                 </Accordion.Collapse>
               </Card>
             </Accordion>
