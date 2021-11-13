@@ -2,11 +2,16 @@ import React, { Component } from "react";
 import { AiOutlineSmile } from "react-icons/ai";
 import { connect } from "react-redux";
 import firebase from "../../../firebase";
+import {
+  setCurrentChatRoom,
+  setPrivateChatRoom,
+} from "../../../redux/action/chatroomAction";
 
 export class DirectMessage extends Component {
   state = {
     userRef: firebase.database().ref("user"),
     user: [],
+    activeChatRoom: "",
   };
 
   componentDidMount() {
@@ -28,16 +33,55 @@ export class DirectMessage extends Component {
     });
   };
 
-  renderDM = () => {};
+  setActiveChatRoom = (userID) => {
+    this.setState({ activeChatRoom: userID });
+  };
+
+  changeChatRoom = (user) => {
+    const chatRoomID = this.getChatRoomID(user.uid);
+    const chatRoomData = {
+      id: chatRoomID,
+      name: user.name,
+    };
+
+    this.props.dispatch(setCurrentChatRoom(chatRoomData));
+    this.props.dispatch(setPrivateChatRoom(true));
+    this.setActiveChatRoom(user.uid);
+  };
+
+  getChatRoomID = (userID) => {
+    const currentUserID = this.props.user.uid;
+
+    return userID > currentUserID
+      ? `${userID}/${currentUserID}`
+      : `${currentUserID}/${userID}`;
+  };
+
+  renderDM = (user) =>
+    user.length > 0 &&
+    user.map((u) => (
+      <li
+        key={u.uid}
+        style={{
+          backgroundColor: u.uid === this.state.activeChatRoom && "#ffffff45",
+        }}
+        onClick={() => this.changeChatRoom(u)}
+      >
+        # {u.name}
+      </li>
+    ));
 
   render() {
+    const { user } = this.state;
     return (
       <div>
         <span style={{ display: "flex", alignItems: "center" }}>
-          <AiOutlineSmile style={{ marginRight: 3 }} /> DM ({})
+          <AiOutlineSmile style={{ marginRight: 3 }} /> DM ({user.length})
         </span>
 
-        <ul style={{ listStyleType: "none", padding: 0 }}>{this.renderDM()}</ul>
+        <ul style={{ listStyleType: "none", padding: 0 }}>
+          {this.renderDM(user)}
+        </ul>
       </div>
     );
   }

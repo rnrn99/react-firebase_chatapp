@@ -48,12 +48,7 @@ function MessageHeader({ handleSearchChange }) {
             </InputGroup>
           </Col>
         </Row>
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <p>
-            <Image src={chatRoom && chatRoom.createdBy.image} width={30} />
-            {chatRoom && chatRoom.createdBy.name}
-          </p>
-        </div>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}></div>
         <Row>
           <Col>
             <Accordion>
