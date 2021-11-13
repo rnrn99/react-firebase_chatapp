@@ -50,7 +50,7 @@ function MessageHeader({ handleSearchChange }) {
         </Row>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <p>
-            <Image src={chatRoom.createdBy.image} width={30} />
+            <Image src={chatRoom && chatRoom.createdBy.image} width={30} />
             {chatRoom && chatRoom.createdBy.name}
           </p>
         </div>
