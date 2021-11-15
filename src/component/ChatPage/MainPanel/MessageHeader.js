@@ -10,11 +10,12 @@ import {
   Card,
   Button,
 } from "react-bootstrap";
-import { FaLock, FaRegHeart, FaSearch } from "react-icons/fa";
+import { FaLock, FaLockOpen, FaRegHeart, FaSearch } from "react-icons/fa";
 import { useSelector } from "react-redux";
 
 function MessageHeader({ handleSearchChange }) {
   const chatRoom = useSelector((state) => state.chatRoom.currentChatRoom);
+  const isPrivate = useSelector((state) => state.chatRoom.isPrivate);
   return (
     <div
       style={{
@@ -30,10 +31,9 @@ function MessageHeader({ handleSearchChange }) {
       <Container>
         <Row>
           <Col>
-            <h2>
-              <FaLock /> <FaRegHeart />
-              {chatRoom && chatRoom.name}
-            </h2>
+            <h2>{chatRoom && chatRoom.name}</h2>
+            {isPrivate ? <FaLock /> : <FaLockOpen />}
+            <FaRegHeart />
           </Col>
           <Col>
             <InputGroup>
