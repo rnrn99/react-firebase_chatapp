@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Container,
   Row,
@@ -10,12 +10,47 @@ import {
   Card,
   Button,
 } from "react-bootstrap";
-import { FaLock, FaLockOpen, FaRegHeart, FaSearch } from "react-icons/fa";
+import {
+  FaLock,
+  FaLockOpen,
+  FaHeart,
+  FaRegHeart,
+  FaSearch,
+} from "react-icons/fa";
 import { useSelector } from "react-redux";
+import firebase from "../../../firebase";
 
 function MessageHeader({ handleSearchChange }) {
   const chatRoom = useSelector((state) => state.chatRoom.currentChatRoom);
   const isPrivate = useSelector((state) => state.chatRoom.isPrivate);
+  const user = useSelector((state) => state.user.currentUser);
+  const [isFavorited, setisFavorited] = useState(false);
+  const userRef = firebase.database().ref("user");
+
+  const handleFavorite = () => {
+    if (isFavorited) {
+      userRef
+        .child(`${user.uid}/favorited`)
+        .child(chatRoom.id)
+        .remove((err) => {
+          if (err !== null) console.log(err.message);
+        });
+      setisFavorited((prev) => !prev);
+    } else {
+      userRef.child(`${user.uid}/favorited`).update({
+        [chatRoom.id]: {
+          name: chatRoom.name,
+          description: chatRoom.description,
+          createdBy: {
+            name: chatRoom.createdBy.name,
+            image: chatRoom.createdBy.image,
+          },
+        },
+      });
+      setisFavorited((prev) => !prev);
+    }
+  };
+
   return (
     <div
       style={{
@@ -33,7 +68,11 @@ function MessageHeader({ handleSearchChange }) {
           <Col>
             <h2>{chatRoom && chatRoom.name}</h2>
             {isPrivate ? <FaLock /> : <FaLockOpen />}
-            <FaRegHeart />
+            {!isPrivate && (
+              <span style={{ cursor: "pointer" }} onClick={handleFavorite}>
+                {isFavorited ? <FaHeart /> : <FaRegHeart />}
+              </span>
+            )}
           </Col>
           <Col>
             <InputGroup>
