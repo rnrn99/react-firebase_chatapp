@@ -1,8 +1,6 @@
 import React, { Component } from "react";
 import { AiOutlineSmile, AiOutlinePlus } from "react-icons/ai";
-import Modal from "react-bootstrap/Modal";
-import Button from "react-bootstrap/Button";
-import Form from "react-bootstrap/Form";
+import { Modal, Button, Form, Badge } from "react-bootstrap";
 import { connect } from "react-redux";
 import firebase from "../../../firebase";
 import {
@@ -16,9 +14,11 @@ export class ChatRooms extends Component {
     name: "",
     description: "",
     chatRoomRef: firebase.database().ref("chatroom"),
+    messageRef: firebase.database().ref("message"),
     chatRoom: [],
     firstLoad: true,
     activeChatRoomId: "",
+    notifications: [],
   };
 
   componentDidMount() {
@@ -27,15 +27,30 @@ export class ChatRooms extends Component {
 
   componentWillUnmount() {
     this.state.chatRoomRef.off();
+    this.state.chatRoom.forEach((room) => {
+      this.state.messageRef.child(room.id).off();
+    });
   }
 
   AddChatRoomListener = () => {
     let arrChatRoom = [];
     this.state.chatRoomRef.on("child_added", (DataSnapshot) => {
       arrChatRoom.push(DataSnapshot.val());
-      this.setState({ chatRoom: arrChatRoom }, () => {
-        this.setFirstChatRoom();
-      });
+      this.setState({ chatRoom: arrChatRoom }, () => this.setFirstChatRoom());
+      this.addNotificationListener(DataSnapshot.key);
+    });
+  };
+
+  addNotificationListener = (chatRoomID) => {
+    this.state.messageRef.child(chatRoomID).on("value", (snapshot) => {
+      if (this.props.chatRoom) {
+        this.handleNotification(
+          chatRoomID,
+          this.props.chatRoom.id,
+          this.state.notifications,
+          snapshot,
+        );
+      }
     });
   };
 
@@ -50,6 +65,7 @@ export class ChatRooms extends Component {
 
   handleClose = () => this.setState({ show: false });
   handleShow = () => this.setState({ show: true });
+
   handleSubmit = (e) => {
     e.preventDefault();
 
@@ -57,6 +73,63 @@ export class ChatRooms extends Component {
 
     if (this.isFormValid(name, description)) {
       this.addChatRoom();
+    }
+  };
+
+  handleNotification = (
+    chatRoomID,
+    currentChatRoomID,
+    notifications,
+    snapshot,
+  ) => {
+    let index = notifications.findIndex(
+      (notification) => notification.id === chatRoomID,
+    );
+
+    if (index === -1) {
+      // notifications state 안에 해당 채팅방의 알림 정보가 없을 때
+      notifications.push({
+        id: chatRoomID,
+        total: snapshot.numChildren(),
+        lastKnownTotal: snapshot.numChildren(),
+        count: 0,
+      });
+    } else {
+      // 이미 해당 채팅방의 알림 정보가 있을 때
+      if (chatRoomID !== currentChatRoomID) {
+        if (snapshot.numChildren() - notifications[index].lastKnownTotal > 0) {
+          notifications[index].count =
+            snapshot.numChildren() - notifications[index].lastKnownTotal;
+        }
+      }
+      notifications[index].total = snapshot.numChildren();
+    }
+
+    this.setState({ notifications });
+  };
+
+  getNotificationCount = (chatRoom) => {
+    let count = 0;
+
+    this.state.notifications.forEach((notification) => {
+      if (notification.id === chatRoom.id) {
+        count = notification.count;
+      }
+    });
+    if (count > 0) return count;
+  };
+
+  clearNotification = () => {
+    let index = this.state.notifications.findIndex(
+      (notification) => notification.id === this.props.chatRoom.id,
+    );
+
+    if (index !== -1) {
+      let updatedNotification = [...this.state.notifications];
+      updatedNotification[index].lastKnownTotal =
+        this.state.notifications[index].total;
+      updatedNotification[index].count = 0;
+      this.setState({ notifications: updatedNotification });
     }
   };
 
@@ -92,6 +165,7 @@ export class ChatRooms extends Component {
     this.props.dispatch(setCurrentChatRoom(room));
     this.props.dispatch(setPrivateChatRoom(false));
     this.setState({ activeChatRoomId: room.id });
+    this.clearNotification();
   };
 
   renderChatRoom = (chatRoom) =>
@@ -107,6 +181,9 @@ export class ChatRooms extends Component {
         onClick={() => this.changeChatRoom(room)}
       >
         # {room.name}
+        <Badge style={{ float: "right", marginTop: "4px" }} variant="danger">
+          {this.getNotificationCount(room)}
+        </Badge>
       </li>
     ));
 
@@ -179,6 +256,7 @@ export class ChatRooms extends Component {
 const mapStateToProps = (state) => {
   return {
     user: state.user.currentUser,
+    chatRoom: state.chatRoom.currentChatRoom,
   };
 };
 
