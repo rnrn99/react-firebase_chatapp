@@ -20,6 +20,12 @@ export class Favorited extends Component {
     }
   }
 
+  componentWillUnmount() {
+    if (this.props.user) {
+      this.removeListener(this.props.user.uid);
+    }
+  }
+
   addFavoriteListener = (userID) => {
     const { userRef } = this.state;
     userRef
@@ -49,6 +55,10 @@ export class Favorited extends Component {
           favoritedChatRoom: filteredChatRoom,
         });
       });
+  };
+
+  removeListener = (userID) => {
+    this.state.userRef.child(userID).child("favorited").off();
   };
 
   changeChatRoom = (room) => {
