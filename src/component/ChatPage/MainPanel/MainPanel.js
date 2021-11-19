@@ -4,6 +4,7 @@ import Message from "./Message";
 import MessageForm from "./MessageForm";
 import { connect } from "react-redux";
 import firebase from "../../../firebase";
+import { setUserPost } from "../../../redux/action/chatroomAction";
 
 export class MainPanel extends Component {
   state = {
@@ -54,7 +55,23 @@ export class MainPanel extends Component {
       .on("child_added", (DataSnapshot) => {
         arrMessage.push(DataSnapshot.val());
         this.setState({ message: arrMessage, messageLoading: false });
+        this.userPostCount(arrMessage);
       });
+  };
+
+  userPostCount = (messages) => {
+    let userPost = messages.reduce((acc, message) => {
+      if (message.user.name in acc) {
+        acc[message.user.name].count += 1;
+      } else {
+        acc[message.user.name] = {
+          image: message.user.image,
+          count: 1,
+        };
+      }
+      return acc;
+    }, {});
+    this.props.dispatch(setUserPost(userPost));
   };
 
   renderMessage = (message) =>

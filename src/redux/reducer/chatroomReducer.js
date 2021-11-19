@@ -1,8 +1,13 @@
-import { SET_CURRENT_CHAT_ROOM, SET_PRIVATE_CHAT_ROOM } from "../action/types";
+import {
+  SET_CURRENT_CHAT_ROOM,
+  SET_PRIVATE_CHAT_ROOM,
+  SET_USER_POST,
+} from "../action/types";
 
 const initialChatRoomState = {
   currentChatRoom: null,
   isPrivate: false,
+  userPost: null,
 };
 
 export default function userReducer(state = initialChatRoomState, action) {
@@ -16,6 +21,11 @@ export default function userReducer(state = initialChatRoomState, action) {
       return {
         ...state,
         isPrivate: action.payload,
+      };
+    case SET_USER_POST:
+      return {
+        ...state,
+        userPost: action.payload,
       };
     default:
       return state;
