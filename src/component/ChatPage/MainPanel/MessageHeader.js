@@ -30,6 +30,20 @@ function MessageHeader({ handleSearchChange }) {
   useEffect(() => {
     if (chatRoom && user) {
       addFavoriteListener(chatRoom.id, user.uid);
+
+      // 사진 변경 부분 나중에 다시
+      if (
+        !isPrivate &&
+        user.displayName === chatRoom.createdBy.name &&
+        user.photoURL !== chatRoom.createdBy.image
+      ) {
+        firebase
+          .database()
+          .ref("chatroom")
+          .child(chatRoom.id)
+          .child("createdBy")
+          .update({ image: user.photoURL });
+      }
     }
   }, []);
 
@@ -107,7 +121,23 @@ function MessageHeader({ handleSearchChange }) {
             </InputGroup>
           </Col>
         </Row>
-        <div style={{ display: "flex", justifyContent: "flex-end" }}></div>
+        {!isPrivate && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginBottom: "1rem",
+            }}
+          >
+            <Image
+              src={chatRoom && chatRoom.createdBy.image}
+              style={{ width: "20px", height: "20px", marginTop: "3px" }}
+              roundedCircle
+            />
+            {chatRoom && chatRoom.createdBy.name}
+          </div>
+        )}
+
         <Row>
           <Col>
             <Accordion>
