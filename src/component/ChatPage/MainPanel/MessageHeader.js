@@ -17,8 +17,9 @@ import {
   FaRegHeart,
   FaSearch,
 } from "react-icons/fa";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import firebase from "../../../firebase";
+import { setUserImage } from "../../../redux/action/chatroomAction";
 
 function MessageHeader({ handleSearchChange }) {
   const chatRoom = useSelector((state) => state.chatRoom.currentChatRoom);
@@ -26,17 +27,23 @@ function MessageHeader({ handleSearchChange }) {
   const user = useSelector((state) => state.user.currentUser);
   const [isFavorited, setisFavorited] = useState(false);
   const userRef = firebase.database().ref("user");
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (chatRoom && user) {
       addFavoriteListener(chatRoom.id, user.uid);
+    }
+  }, []);
 
-      // 사진 변경 부분 나중에 다시
+  useEffect(() => {
+    if (chatRoom && user) {
       if (
         !isPrivate &&
         user.displayName === chatRoom.createdBy.name &&
         user.photoURL !== chatRoom.createdBy.image
       ) {
+        dispatch(setUserImage(user.photoURL));
+
         firebase
           .database()
           .ref("chatroom")
@@ -45,7 +52,7 @@ function MessageHeader({ handleSearchChange }) {
           .update({ image: user.photoURL });
       }
     }
-  }, []);
+  }, [user.photoURL]);
 
   const addFavoriteListener = (chatRoomID, userID) => {
     userRef

@@ -2,6 +2,7 @@ import {
   SET_CURRENT_CHAT_ROOM,
   SET_PRIVATE_CHAT_ROOM,
   SET_USER_POST,
+  SET_USER_IMAGE,
 } from "../action/types";
 
 const initialChatRoomState = {
@@ -27,6 +28,18 @@ export default function userReducer(state = initialChatRoomState, action) {
         ...state,
         userPost: action.payload,
       };
+    case SET_USER_IMAGE: {
+      return {
+        ...state,
+        currentChatRoom: {
+          ...state.currentChatRoom,
+          createdBy: {
+            ...state.currentChatRoom.createdBy,
+            image: action.payload,
+          },
+        },
+      };
+    }
     default:
       return state;
   }
