@@ -6,6 +6,7 @@ import firebase from "../../../firebase";
 import {
   setCurrentChatRoom,
   setPrivateChatRoom,
+  setUserPost,
 } from "../../../redux/action/chatroomAction";
 
 export class ChatRooms extends Component {
@@ -164,6 +165,7 @@ export class ChatRooms extends Component {
   changeChatRoom = (room) => {
     this.props.dispatch(setCurrentChatRoom(room));
     this.props.dispatch(setPrivateChatRoom(false));
+    this.props.dispatch(setUserPost(null));
     this.setState({ activeChatRoomId: room.id });
     this.clearNotification();
   };

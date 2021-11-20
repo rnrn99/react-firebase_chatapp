@@ -9,6 +9,7 @@ import {
   Accordion,
   Card,
   Button,
+  Media,
 } from "react-bootstrap";
 import {
   FaLock,
@@ -25,6 +26,7 @@ function MessageHeader({ handleSearchChange }) {
   const chatRoom = useSelector((state) => state.chatRoom.currentChatRoom);
   const isPrivate = useSelector((state) => state.chatRoom.isPrivate);
   const user = useSelector((state) => state.user.currentUser);
+  const userPost = useSelector((state) => state.chatRoom.userPost);
   const [isFavorited, setisFavorited] = useState(false);
   const userRef = firebase.database().ref("user");
   const dispatch = useDispatch();
@@ -91,6 +93,25 @@ function MessageHeader({ handleSearchChange }) {
       setisFavorited((prev) => !prev);
     }
   };
+
+  const renderUserPost = (userPost) =>
+    Object.entries(userPost)
+      .sort((a, b) => b[1].count - a[1].count)
+      .map(([key, val], i) => (
+        <Media key={i}>
+          <img
+            style={{ borderRadius: 25 }}
+            width={32}
+            height={32}
+            src={val.image}
+            alt={val.name}
+          />
+          <Media.Body>
+            <h6 style={{ display: "inline" }}>{key}</h6>
+            <p style={{ float: "right" }}>{val.count}개</p>
+          </Media.Body>
+        </Media>
+      ));
 
   return (
     <div
@@ -169,7 +190,7 @@ function MessageHeader({ handleSearchChange }) {
                   </Accordion.Toggle>
                 </Card.Header>
                 <Accordion.Collapse eventKey="0">
-                  <Card.Body>body</Card.Body>
+                  <Card.Body>{userPost && renderUserPost(userPost)}</Card.Body>
                 </Accordion.Collapse>
               </Card>
             </Accordion>

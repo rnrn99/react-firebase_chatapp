@@ -5,6 +5,7 @@ import firebase from "../../../firebase";
 import {
   setCurrentChatRoom,
   setPrivateChatRoom,
+  setUserPost,
 } from "../../../redux/action/chatroomAction";
 
 export class DirectMessage extends Component {
@@ -46,6 +47,7 @@ export class DirectMessage extends Component {
 
     this.props.dispatch(setCurrentChatRoom(chatRoomData));
     this.props.dispatch(setPrivateChatRoom(true));
+    this.props.dispatch(setUserPost(null));
     this.setActiveChatRoom(user.uid);
   };
 
