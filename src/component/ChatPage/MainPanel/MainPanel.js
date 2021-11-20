@@ -14,6 +14,9 @@ export class MainPanel extends Component {
     searchTerm: "",
     searchResult: [],
     searchLoading: false,
+    typingRef: firebase.database().ref("typing"),
+    typingUser: [],
+    listenerList: [],
   };
 
   componentDidMount() {
@@ -21,7 +24,12 @@ export class MainPanel extends Component {
 
     if (chatRoom) {
       this.addMessageListener(chatRoom.id);
+      this.addTypingListener(chatRoom.id);
     }
+  }
+
+  componentWillUnmount() {
+    this.removeListener(this.state.listenerList);
   }
 
   handleSearch = () => {
@@ -57,6 +65,51 @@ export class MainPanel extends Component {
         this.setState({ message: arrMessage, messageLoading: false });
         this.userPostCount(arrMessage);
       });
+    this.addToListenerList(chatRoomID, this.state.messageRef, "child_added");
+  };
+
+  addTypingListener = (chatRoomID) => {
+    let arrTyping = [];
+    this.state.typingRef.child(chatRoomID).on("child_added", (snapshot) => {
+      if (snapshot.key !== this.props.user.uid) {
+        arrTyping = arrTyping.concat({
+          id: snapshot.key,
+          name: snapshot.val(),
+        });
+        this.setState({ typingUser: arrTyping });
+      }
+    });
+    this.addToListenerList(chatRoomID, this.state.typingRef, "child_added");
+
+    this.state.typingRef.child(chatRoomID).on("child_removed", (snapshot) => {
+      const index = arrTyping.findIndex((user) => user.id === snapshot.key);
+      if (index !== -1) {
+        arrTyping = arrTyping.filter((user) => user.id !== snapshot.key);
+        this.setState({ typingUser: arrTyping });
+      }
+    });
+    this.addToListenerList(chatRoomID, this.state.typingRef, "child_removed");
+  };
+
+  addToListenerList = (id, ref, event) => {
+    const index = this.state.listenerList.findIndex((listener) => {
+      return (
+        listener.id === id && listener.ref === ref && listener.event === event
+      );
+    });
+
+    if (index === -1) {
+      const newListener = { id, ref, event };
+      this.setState({
+        listenerList: this.state.listenerList.concat(newListener),
+      });
+    }
+  };
+
+  removeListener = (listenerList) => {
+    listenerList.forEach((listener) => {
+      listener.ref.child(listener.id).off(listener.event);
+    });
   };
 
   userPostCount = (messages) => {
@@ -80,8 +133,14 @@ export class MainPanel extends Component {
       <Message key={m.timestamp} message={m} user={this.props.user} />
     ));
 
+  renderTyping = (typingUser) =>
+    typingUser.length > 0 &&
+    typingUser.map((user) => (
+      <span>{user.name}님이 채팅을 입력하고 있습니다...</span>
+    ));
+
   render() {
-    const { message, searchTerm, searchResult } = this.state;
+    const { message, searchTerm, searchResult, typingUser } = this.state;
     return (
       <div style={{ padding: "2rem 2rem 0 2rem" }}>
         <MessageHeader handleSearchChange={this.handleSearchChange} />
@@ -94,11 +153,16 @@ export class MainPanel extends Component {
             padding: "1rem",
             marginBottom: "1rem",
             overflowY: "auto",
+            position: "relative",
           }}
         >
           {searchTerm
             ? this.renderMessage(searchResult)
             : this.renderMessage(message)}
+
+          <div style={{ position: "absolute", bottom: 0 }}>
+            {this.renderTyping(typingUser)}
+          </div>
         </div>
         <MessageForm />
       </div>

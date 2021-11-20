@@ -14,6 +14,7 @@ function MessageForm() {
   const [Percentage, setPercentage] = useState(0);
 
   const messageRef = firebase.database().ref("message");
+  const typingRef = firebase.database().ref("typing");
   const storageRef = firebase.storage().ref();
   const inputOpenImageRef = useRef();
 
@@ -62,6 +63,14 @@ function MessageForm() {
     );
   };
 
+  const handleKeyDown = () => {
+    if (Content) {
+      typingRef.child(chatRoom.id).child(user.uid).set(user.displayName);
+    } else {
+      typingRef.child(chatRoom.id).child(user.uid).remove();
+    }
+  };
+
   const createMessage = (fileUrl = null) => {
     const message = {
       timestamp: firebase.database.ServerValue.TIMESTAMP,
@@ -92,6 +101,7 @@ function MessageForm() {
 
     try {
       await messageRef.child(chatRoom.id).push().set(createMessage());
+      typingRef.child(chatRoom.id).child(user.uid).remove();
       setLoading(false);
       setContent("");
     } catch (error) {
@@ -105,6 +115,7 @@ function MessageForm() {
       <Form onSubmit={handleSubmit}>
         <Form.Group controlId="exampleForm.ControlTextarea1">
           <Form.Control
+            onKeyDown={handleKeyDown}
             as="textarea"
             rows={3}
             value={Content}
