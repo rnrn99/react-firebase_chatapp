@@ -54,7 +54,7 @@ function MessageHeader({ handleSearchChange }) {
           .update({ image: user.photoURL });
       }
     }
-  }, [user.photoURL]);
+  }, [user]);
 
   const addFavoriteListener = (chatRoomID, userID) => {
     userRef
