@@ -182,10 +182,7 @@ export class MainPanel extends Component {
 
           {this.renderTyping(typingUser)}
 
-          <div
-            ref={(node) => (this.messageEndRef = node)}
-            style={{ border: "1px solid red" }}
-          />
+          <div ref={(node) => (this.messageEndRef = node)} />
         </div>
         <MessageForm />
       </div>
