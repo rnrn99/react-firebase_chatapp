@@ -172,7 +172,6 @@ export class MainPanel extends Component {
             padding: "1rem",
             marginBottom: "1rem",
             overflowY: "auto",
-            position: "relative",
           }}
         >
           {this.renderSkeleton(messageLoading)}
@@ -181,11 +180,12 @@ export class MainPanel extends Component {
             ? this.renderMessage(searchResult)
             : this.renderMessage(message)}
 
-          <div style={{ position: "absolute", bottom: 0 }}>
-            {this.renderTyping(typingUser)}
-          </div>
+          {this.renderTyping(typingUser)}
 
-          <div ref={(node) => (this.messageEndRef = node)} />
+          <div
+            ref={(node) => (this.messageEndRef = node)}
+            style={{ border: "1px solid red" }}
+          />
         </div>
         <MessageForm />
       </div>

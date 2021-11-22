@@ -63,7 +63,11 @@ function MessageForm() {
     );
   };
 
-  const handleKeyDown = () => {
+  const handleKeyDown = (e) => {
+    if (e.ctrlKey && e.keyCode === 13) {
+      handleSubmit();
+    }
+
     if (Content) {
       typingRef.child(chatRoom.id).child(user.uid).set(user.displayName);
     } else {
