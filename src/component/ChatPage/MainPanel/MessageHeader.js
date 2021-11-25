@@ -19,7 +19,14 @@ import {
   FaSearch,
 } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
-import firebase from "../../../firebase";
+import {
+  getDatabase,
+  ref,
+  child,
+  update,
+  remove,
+  onValue,
+} from "firebase/database";
 import { setUserImage } from "../../../redux/action/chatroomAction";
 
 function MessageHeader({ handleSearchChange }) {
@@ -28,7 +35,7 @@ function MessageHeader({ handleSearchChange }) {
   const user = useSelector((state) => state.user.currentUser);
   const userPost = useSelector((state) => state.chatRoom.userPost);
   const [isFavorited, setisFavorited] = useState(false);
-  const userRef = firebase.database().ref("user");
+  const userRef = ref(getDatabase(), "user");
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -46,41 +53,30 @@ function MessageHeader({ handleSearchChange }) {
       ) {
         dispatch(setUserImage(user.photoURL));
 
-        firebase
-          .database()
-          .ref("chatroom")
-          .child(chatRoom.id)
-          .child("createdBy")
-          .update({ image: user.photoURL });
+        update(ref(getDatabase(), `chatroom/${chatRoom.id}/createdBy`), {
+          image: user.photoURL,
+        });
       }
     }
   }, [user]);
 
   const addFavoriteListener = (chatRoomID, userID) => {
-    userRef
-      .child(userID)
-      .child("favorited")
-      .once("value")
-      .then((data) => {
-        if (data.val() !== null) {
-          const id = Object.keys(data.val());
-          const isAlreadyFavorited = id.includes(chatRoomID);
-          setisFavorited(isAlreadyFavorited);
-        }
-      });
+    onValue(child(userRef, `${userID}/favorited`), (data) => {
+      if (data.val() !== null) {
+        const id = Object.keys(data.val());
+        const isAlreadyFavorited = id.includes(chatRoomID);
+        setisFavorited(isAlreadyFavorited);
+      }
+    });
   };
 
   const handleFavorite = () => {
     if (isFavorited) {
-      userRef
-        .child(`${user.uid}/favorited`)
-        .child(chatRoom.id)
-        .remove((err) => {
-          if (err !== null) console.log(err.message);
-        });
       setisFavorited((prev) => !prev);
+      remove(child(userRef, `${user.uid}/favorited/${chatRoom.id}`));
     } else {
-      userRef.child(`${user.uid}/favorited`).update({
+      setisFavorited((prev) => !prev);
+      update(child(userRef, `${user.uid}/favorited`), {
         [chatRoom.id]: {
           name: chatRoom.name,
           description: chatRoom.description,
@@ -90,7 +86,6 @@ function MessageHeader({ handleSearchChange }) {
           },
         },
       });
-      setisFavorited((prev) => !prev);
     }
   };
 

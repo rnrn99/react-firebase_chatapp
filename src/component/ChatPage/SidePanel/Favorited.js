@@ -1,6 +1,13 @@
 import React, { Component } from "react";
 import { AiOutlineSmile } from "react-icons/ai";
-import firebase from "../../../firebase";
+import {
+  getDatabase,
+  ref,
+  child,
+  off,
+  onChildAdded,
+  onChildRemoved,
+} from "firebase/database";
 import { connect } from "react-redux";
 import {
   setCurrentChatRoom,
@@ -10,7 +17,7 @@ import {
 
 export class Favorited extends Component {
   state = {
-    userRef: firebase.database().ref("user"),
+    userRef: ref(getDatabase(), "user"),
     favoritedChatRoom: [],
     activeChatRoomId: "",
   };
@@ -29,37 +36,29 @@ export class Favorited extends Component {
 
   addFavoriteListener = (userID) => {
     const { userRef } = this.state;
-    userRef
-      .child(userID)
-      .child("favorited")
-      .on("child_added", (snapshot) => {
-        const favoritedChatRoom = { id: snapshot.key, ...snapshot.val() };
-        this.setState({
-          favoritedChatRoom: [
-            ...this.state.favoritedChatRoom,
-            favoritedChatRoom,
-          ],
-        });
-      });
 
-    userRef
-      .child(userID)
-      .child("favorited")
-      .on("child_removed", (snapshot) => {
-        const removedChatRoom = { id: snapshot.key, ...snapshot.val() };
-        const filteredChatRoom = this.state.favoritedChatRoom.filter(
-          (chatRoom) => {
-            return chatRoom.id !== removedChatRoom.id;
-          },
-        );
-        this.setState({
-          favoritedChatRoom: filteredChatRoom,
-        });
+    onChildAdded(child(userRef, `${userID}/favorited`), (snapshot) => {
+      const favoritedChatRoom = { id: snapshot.key, ...snapshot.val() };
+      this.setState({
+        favoritedChatRoom: [...this.state.favoritedChatRoom, favoritedChatRoom],
       });
+    });
+
+    onChildRemoved(child(userRef, `${userID}/favorited`), (snapshot) => {
+      const removedChatRoom = { id: snapshot.key, ...snapshot.val() };
+      const filteredChatRoom = this.state.favoritedChatRoom.filter(
+        (chatRoom) => {
+          return chatRoom.id !== removedChatRoom.id;
+        },
+      );
+      this.setState({
+        favoritedChatRoom: filteredChatRoom,
+      });
+    });
   };
 
   removeListener = (userID) => {
-    this.state.userRef.child(userID).child("favorited").off();
+    off(child(this.state.userRef, `${userID}/favorited`));
   };
 
   changeChatRoom = (room) => {

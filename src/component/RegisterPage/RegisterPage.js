@@ -1,7 +1,12 @@
 import React, { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
-import firebase from "../../firebase";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import { getDatabase, ref, set } from "firebase/database";
 import md5 from "md5";
 
 function RegisterPage() {
@@ -21,18 +26,21 @@ function RegisterPage() {
   const onSubmit = async (data) => {
     try {
       setLoading(true);
+      const auth = getAuth();
 
-      let createUser = await firebase
-        .auth()
-        .createUserWithEmailAndPassword(data.email, data.password);
+      let createUser = await createUserWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password,
+      );
 
-      await createUser.user.updateProfile({
+      await updateProfile(auth.currentUser, {
         displayName: data.name,
         photoURL: `http://gravatar.com/avatar/${md5(data.email)}?d=identicon`,
       });
-      console.log("[Create User] ", createUser);
 
-      await firebase.database().ref("user").child(createUser.user.uid).set({
+      const database = getDatabase();
+      set(ref(database, `users/${createUser.user.uid}`), {
         name: createUser.user.displayName,
         image: createUser.user.photoURL,
       });

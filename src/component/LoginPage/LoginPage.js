@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
-import firebase from "../../firebase";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
 function LoginPage() {
   const {
@@ -16,10 +16,8 @@ function LoginPage() {
   const onSubmit = async (data) => {
     try {
       setLoading(true);
-
-      await firebase
-        .auth()
-        .signInWithEmailAndPassword(data.email, data.password);
+      const auth = getAuth();
+      await signInWithEmailAndPassword(auth, data.email, data.password);
 
       setLoading(false);
     } catch (error) {

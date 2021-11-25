@@ -4,7 +4,14 @@ import Message from "./Message";
 import MessageForm from "./MessageForm";
 import Skeleton from "../../../common/Skeleton";
 import { connect } from "react-redux";
-import firebase from "../../../firebase";
+import {
+  getDatabase,
+  ref,
+  child,
+  off,
+  onChildAdded,
+  onChildRemoved,
+} from "firebase/database";
 import { setUserPost } from "../../../redux/action/chatroomAction";
 
 export class MainPanel extends Component {
@@ -12,12 +19,12 @@ export class MainPanel extends Component {
 
   state = {
     message: [],
-    messageRef: firebase.database().ref("message"),
+    messageRef: ref(getDatabase(), "message"),
     messageLoading: true,
     searchTerm: "",
     searchResult: [],
     searchLoading: false,
-    typingRef: firebase.database().ref("typing"),
+    typingRef: ref(getDatabase(), "typing"),
     typingUser: [],
     listenerList: [],
   };
@@ -67,19 +74,17 @@ export class MainPanel extends Component {
 
   addMessageListener = (chatRoomID) => {
     let arrMessage = [];
-    this.state.messageRef
-      .child(chatRoomID)
-      .on("child_added", (DataSnapshot) => {
-        arrMessage.push(DataSnapshot.val());
-        this.setState({ message: arrMessage, messageLoading: false });
-        this.userPostCount(arrMessage);
-      });
+    onChildAdded(child(this.state.messageRef, chatRoomID), (DataSnapshot) => {
+      arrMessage.push(DataSnapshot.val());
+      this.setState({ message: arrMessage, messageLoading: false });
+      this.userPostCount(arrMessage);
+    });
     this.addToListenerList(chatRoomID, this.state.messageRef, "child_added");
   };
 
   addTypingListener = (chatRoomID) => {
     let arrTyping = [];
-    this.state.typingRef.child(chatRoomID).on("child_added", (snapshot) => {
+    onChildAdded(child(this.state.typingRef, chatRoomID), (snapshot) => {
       if (snapshot.key !== this.props.user.uid) {
         arrTyping = arrTyping.concat({
           id: snapshot.key,
@@ -90,7 +95,7 @@ export class MainPanel extends Component {
     });
     this.addToListenerList(chatRoomID, this.state.typingRef, "child_added");
 
-    this.state.typingRef.child(chatRoomID).on("child_removed", (snapshot) => {
+    onChildRemoved(child(this.state.typingRef, chatRoomID), (snapshot) => {
       const index = arrTyping.findIndex((user) => user.id === snapshot.key);
       if (index !== -1) {
         arrTyping = arrTyping.filter((user) => user.id !== snapshot.key);
@@ -117,7 +122,7 @@ export class MainPanel extends Component {
 
   removeListener = (listenerList) => {
     listenerList.forEach((listener) => {
-      listener.ref.child(listener.id).off(listener.event);
+      off(ref(getDatabase(), `message/${listener.id}`), listener.event);
     });
   };
 

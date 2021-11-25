@@ -1,20 +1,20 @@
 import React, { useEffect } from "react";
 import { Switch, Route, useHistory } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import firebase from "./firebase";
 import { setUser, clearUser } from "./redux/action/userAction";
-
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import LoginPage from "./component/LoginPage/LoginPage";
 import RegisterPage from "./component/RegisterPage/RegisterPage";
 import ChatPage from "./component/ChatPage/ChatPage";
+import firebase from "./firebase";
 
 function App() {
   let history = useHistory();
   let dispatch = useDispatch();
   const isLoading = useSelector((state) => state.user.isLoading);
-
   useEffect(() => {
-    firebase.auth().onAuthStateChanged((user) => {
+    const auth = getAuth();
+    onAuthStateChanged(auth, (user) => {
       if (user) {
         history.push("/");
         dispatch(setUser(user));

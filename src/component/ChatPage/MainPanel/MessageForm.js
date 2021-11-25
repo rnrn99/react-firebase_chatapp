@@ -2,7 +2,13 @@ import React, { useState, useRef } from "react";
 import { Form, ProgressBar, Row, Col } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import mime from "mime-types";
-import firebase from "../../../firebase";
+import { getDatabase, ref, child, set, remove, push } from "firebase/database";
+import {
+  getStorage,
+  ref as storageref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
 
 function MessageForm() {
   const user = useSelector((state) => state.user.currentUser);
@@ -13,9 +19,8 @@ function MessageForm() {
   const [Loading, setLoading] = useState(false);
   const [Percentage, setPercentage] = useState(0);
 
-  const messageRef = firebase.database().ref("message");
-  const typingRef = firebase.database().ref("typing");
-  const storageRef = firebase.storage().ref();
+  const messageRef = ref(getDatabase(), "message");
+  const typingRef = ref(getDatabase(), "typing");
   const inputOpenImageRef = useRef();
 
   const handleChange = (e) => {
@@ -37,30 +42,36 @@ function MessageForm() {
     const file = e.target.files[0];
     const filePath = `${getPath()}/${file.name}`;
     const metadata = { contentType: mime.lookup(file.name) };
+    const storage = getStorage();
     setLoading(true);
 
-    let uploadTask = storageRef.child(filePath).put(file, metadata);
+    try {
+      const storageRef = storageref(storage, filePath);
+      const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
-    uploadTask.on(
-      "state_changed",
-      (UploadSnapshot) => {
-        const percent = Math.round(
-          (UploadSnapshot.bytesTransferred / UploadSnapshot.totalBytes) * 100,
-        );
-        setPercentage(percent);
-      },
-      (err) => {
-        alert(err.message);
-        setLoading(false);
-      },
-      () => {
-        // storage에 file 저장 후 database에 message 저장
-        uploadTask.snapshot.ref.getDownloadURL().then((fileUrl) => {
-          messageRef.child(chatRoom.id).push().set(createMessage(fileUrl));
+      uploadTask.on(
+        "state_changed",
+        (UploadSnapshot) => {
+          const percent = Math.round(
+            (UploadSnapshot.bytesTransferred / UploadSnapshot.totalBytes) * 100,
+          );
+          setPercentage(percent);
+        },
+        (err) => {
+          alert(err.message);
           setLoading(false);
-        });
-      },
-    );
+        },
+        () => {
+          // storage에 file 저장 후 database에 message 저장
+          getDownloadURL(uploadTask.snapshot.ref).then((fileUrl) => {
+            set(push(child(messageRef, chatRoom.id)), createMessage(fileUrl));
+            setLoading(false);
+          });
+        },
+      );
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -69,15 +80,15 @@ function MessageForm() {
     }
 
     if (Content) {
-      typingRef.child(chatRoom.id).child(user.uid).set(user.displayName);
+      set(child(typingRef, `${chatRoom.id}/${user.uid}`), user.displayName);
     } else {
-      typingRef.child(chatRoom.id).child(user.uid).remove();
+      remove(child(typingRef, `${chatRoom.id}/${user.uid}`));
     }
   };
 
   const createMessage = (fileUrl = null) => {
     const message = {
-      timestamp: firebase.database.ServerValue.TIMESTAMP,
+      timestamp: new Date(),
       user: {
         id: user.uid,
         name: user.displayName,
@@ -104,8 +115,8 @@ function MessageForm() {
     setLoading(true);
 
     try {
-      await messageRef.child(chatRoom.id).push().set(createMessage());
-      typingRef.child(chatRoom.id).child(user.uid).remove();
+      await set(push(child(messageRef, chatRoom.id)), createMessage());
+      await remove(child(typingRef, `${chatRoom.id}/${user.uid}`));
       setLoading(false);
       setContent("");
     } catch (error) {

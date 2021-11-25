@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { AiOutlineSmile } from "react-icons/ai";
 import { connect } from "react-redux";
-import firebase from "../../../firebase";
+import { getDatabase, ref, child, onChildAdded } from "firebase/database";
 import {
   setCurrentChatRoom,
   setPrivateChatRoom,
@@ -10,7 +10,7 @@ import {
 
 export class DirectMessage extends Component {
   state = {
-    userRef: firebase.database().ref("user"),
+    userRef: ref(getDatabase(), "user"),
     user: [],
     activeChatRoom: "",
   };
@@ -23,7 +23,7 @@ export class DirectMessage extends Component {
 
   addUserListener = () => {
     let arrUser = [];
-    this.state.userRef.on("child_added", (snapshot) => {
+    onChildAdded(this.state.userRef, (snapshot) => {
       if (this.props.user.uid !== snapshot.key) {
         let userInfo = snapshot.val();
         userInfo["uid"] = snapshot.key;

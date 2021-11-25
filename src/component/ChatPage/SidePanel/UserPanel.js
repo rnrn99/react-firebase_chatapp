@@ -2,7 +2,14 @@ import React, { useRef } from "react";
 import { IoMdChatboxes } from "react-icons/io";
 import { Dropdown, Image } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import firebase from "../../../firebase";
+import { getAuth, signOut, updateProfile } from "firebase/auth";
+import { getDatabase, ref, update } from "firebase/database";
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
 import mime from "mime-types";
 import { setPhotoURL } from "../../../redux/action/userAction";
 
@@ -12,7 +19,10 @@ function UserPanel() {
   const dispatch = useDispatch();
 
   const handleLogout = () => {
-    firebase.auth().signOut();
+    const auth = getAuth();
+    signOut(auth)
+      .then(() => {})
+      .catch((error) => {});
   };
 
   const handleOpenUploadPanel = () => {
@@ -22,30 +32,40 @@ function UserPanel() {
   const handleUploadImage = async (event) => {
     const file = event.target.files[0];
     const metadata = { contentType: mime.lookup(file.name) };
+    const auth = getAuth();
+    const user = auth.currentUser;
 
     try {
       // firebase storage에 이미지 저장
-      let uploadTaskSnapshot = await firebase
-        .storage()
-        .ref()
-        .child(`user_image/${user.uid}`)
-        .put(file, metadata);
+      let uploadTask = uploadBytesResumable(
+        storageRef(getStorage(), `user_image/${user.uid}`),
+        file,
+        metadata,
+      );
 
-      // 프로필 이미지 수정
-      let downloadURL = await uploadTaskSnapshot.ref.getDownloadURL();
-      await firebase.auth().currentUser.updateProfile({
-        photoURL: downloadURL,
-      });
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {},
+        (error) => {
+          console.log(error.message);
+        },
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            // 프로필 이미지 수정
+            updateProfile(user, {
+              photoURL: downloadURL,
+            });
 
-      // redux에서 photoURL 변경
-      dispatch(setPhotoURL(downloadURL));
+            // redux에서 photoURL 변경
+            dispatch(setPhotoURL(downloadURL));
 
-      // firebase DB에서 user image 수정
-      await firebase
-        .database()
-        .ref("user")
-        .child(user.uid)
-        .update({ image: downloadURL });
+            // firebase DB에서 user image 수정
+            update(ref(getDatabase(), `user/${user.uid}`), {
+              image: downloadURL,
+            });
+          });
+        },
+      );
     } catch (error) {
       console.log(error.message);
     }
